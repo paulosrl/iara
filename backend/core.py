@@ -141,18 +141,18 @@ DOCUMENTO PARA ANÁLISE:
         raise e
 
 def chat_response(client, model, messages, temperature=0.7, max_tokens=4096):
-    """Envia o histórico de chat para o modelo local e captura métricas de tempo."""
+    """Envia o histórico de chat e retorna um stream de tokens."""
     start_time = time.time()
     try:
-        response = client.chat.completions.create(
+        stream = client.chat.completions.create(
             model=model,
             messages=messages,
             temperature=temperature,
-            max_tokens=max_tokens
+            max_tokens=max_tokens,
+            stream=True
         )
-        end_time = time.time()
-        logger.info(f"API Call Success: {model} em {end_time - start_time:.2f}s")
-        return response, end_time - start_time
+        logger.info(f"API Stream iniciado: {model} em {time.time() - start_time:.2f}s")
+        return stream, start_time
     except Exception as e:
         logger.error(f"Erro na API de Chat: {e}")
         raise e

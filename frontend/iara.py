@@ -382,12 +382,15 @@ if st.session_state.full_text and uploaded_file:
         try:
             client = OpenAI(base_url=st.session_state.active_url, api_key="not-needed")
             sys_prompt = f"Você é a IARA. Responda baseado no DOCUMENTO:\n{st.session_state.full_text[:60000]}"
-            msgs = [{"role": "system", "content": sys_prompt}] + st.session_state.messages[-3:]
-            
+            msgs = [{"role": "system", "content": sys_prompt}] + st.session_state.messages[-10:]
+
             with st.chat_message("assistant", avatar="🧜‍♀️"):
-                resp, _ = chat_response(client, selected_model, msgs)
-                content = resp.choices[0].message.content
-                st.markdown(content)
+                stream, _ = chat_response(client, selected_model, msgs)
+                content = st.write_stream(
+                    chunk.choices[0].delta.content or ""
+                    for chunk in stream
+                    if chunk.choices and chunk.choices[0].delta.content
+                )
                 st.session_state.messages.append({"role": "assistant", "content": content})
         except Exception as e:
             st.error(f"Erro no Chat: {e}")

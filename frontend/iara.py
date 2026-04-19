@@ -224,14 +224,20 @@ def get_models_cached():
             resp = client.models.list()
             ids = [m.id for m in resp.data if "embed" not in m.id.lower()]
             return url, sorted(ids, key=lambda x: get_model_info(x)["score"])
-        except: return None
+        except Exception:
+            return None
 
     with ThreadPoolExecutor(max_workers=len(urls)) as ex:
         futures = {ex.submit(check, u): u for u in urls}
+        result = None
         for f in as_completed(futures):
             res = f.result()
-            if res: return res
-    return None, ["Sem Conexão"]
+            if res and result is None:
+                result = res
+                for pending in futures:
+                    pending.cancel()
+                break
+    return result if result else (None, ["Sem Conexão"])
 
 # --- Barra Lateral (Configurações e Filtros) ---
 with st.sidebar:

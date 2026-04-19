@@ -1,0 +1,7 @@
+Este é um documento de teste para o chat com modelos locais.
+O tema principal é a validação da integração entre Streamlit, Docker e LM Studio.
+Pontos importantes:
+1. O Docker está rodando o Streamlit.
+2. O Streamlit se conecta ao LM Studio via host.docker.internal ou IP do gateway.
+3. O OCR funciona para PDFs (imagens).
+4. O chat permite interagir com o conteúdo extraído.

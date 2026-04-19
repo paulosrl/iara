@@ -15,6 +15,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     tesseract-ocr-por \
     poppler-utils \
     libtesseract-dev \
+    curl \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Create a non-root user for security

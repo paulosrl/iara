@@ -1,25 +1,29 @@
-# 🚩 CHECKPOINT: IARA v2.2 - 100% FINALIZADA E CERTIFICADA
+# 🚩 CHECKPOINT: IARA v2.3 - Bugfixes e Melhorias de Qualidade
 
 **Data:** 19 de Abril de 2026
-**Versão:** v2.2 "Full Resilience"
+**Versão:** v2.3 "Stable Core"
 **GitHub:** [paulosrl/iara](https://github.com/paulosrl/iara)
-**Status:** 100% Estável | 0 Avisos de Build | UI Premium Consolidada
+**Status:** 100% Estável | Bugs críticos corrigidos | Streaming ativo
 
-Este é o ponto de restauração definitivo após a modernização completa do projeto IARA.
+Este checkpoint registra as correções aplicadas após análise estática do codebase v2.2.
 
-## ✅ Diferenciais desta Versão Final:
-- **Resiliência Docker**: Script `restart.sh` com inteligência de detecção BuildKit/Bake.
-- **Build Limpo**: Dockerfile otimizado sem avisos de PATH ou Pip.
-- **Aesthetics PRO**: Interface Maritime PRO com temas dinâmicos e botões azul marinho.
-- **Inteligência**: Prompts de alta densidade para relatórios executivos militares/técnicos.
-- **UX**: Sidebar organizada com checkboxes alinhados à esquerda e botão de "Limpar Chat".
+## ✅ Correções Aplicadas (v2.2 → v2.3):
 
-## 🚀 Arquivos Críticos (Estado Certificado):
-1. `frontend/iara.py`: Motor de UI e Chat.
-2. `backend/core.py`: Motor de OCR e IA.
-3. `restart.sh`: Controlador de containers inteligente.
-4. `Dockerfile`: Imagem otimizada (Slim + OCR).
-5. `README.md`: Documentação v2.2 completa.
+- **Dockerfile**: `curl` adicionado para healthcheck funcionar corretamente.
+- **`get_models_cached`**: `bare except` substituído por `except Exception`; executor agora cancela futures pendentes e retorna no primeiro URL disponível.
+- **`extract_text_from_pdf`**: Páginas do PyPDF2 extraídas sequencialmente antes de paralelizar (thread safety); workers limitados a 2 para PDFs grandes (controle de memória).
+- **Chat**: Streaming real ativado (`stream=True`) — resposta exibida token a token via `st.write_stream`; histórico ampliado de 3 para 10 mensagens.
+- **CSS**: Removido seletor interno `.st-emotion-cache-*` que quebrava a cada atualização do Streamlit.
+- **`.env.example`**: Criado para documentar as variáveis de ambiente necessárias.
+
+## 🚀 Arquivos Modificados:
+1. `Dockerfile` — curl adicionado
+2. `frontend/iara.py` — get_models_cached, streaming, CSS
+3. `backend/core.py` — thread safety, streaming, memória OCR
+4. `.env.example` — criado
+
+## 🔒 Checkpoint Anterior:
+- v2.2 "Full Resilience" — commit `bb28bc8`
 
 ---
-*Certificado por: Antigravity AI - Advanced Agentic Coding Team*
+*Certificado por: Paulo Lima + Claude Sonnet 4.6*

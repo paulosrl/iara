@@ -61,10 +61,6 @@ st.markdown(f"""
     [data-testid="stSidebarUserContent"] {{
         padding-top: 2rem !important;
     }}
-    /* Para versões que usam containers internos específicos */
-    .st-emotion-cache-6qob1r {{
-        padding-top: 1rem !important;
-    }}
 
     /* Configuração Global */
     .stApp {{

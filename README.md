@@ -1,4 +1,8 @@
-# 🧜‍♀️ IARA - Inteligência Artificial Regional de Análise (v2.2)
+# 🧜‍♀️ IARA - Inteligência Analítica (v2.2)
+
+![Build Status](https://github.com/paulosrl/iara/actions/workflows/docker-build.yml/badge.svg)
+
+**GitHub:** [paulosrl/iara](https://github.com/paulosrl/iara)
 
 **IARA** é um assistente conversacional local e gerador de relatórios técnicos de alto impacto, otimizado para o processamento de grandes volumes de dados via modelos de linguagem executados no LM Studio.
 

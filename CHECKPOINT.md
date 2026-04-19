@@ -2,6 +2,7 @@
 
 **Data:** 19 de Abril de 2026
 **Versão:** v2.2 "Full Resilience"
+**GitHub:** [paulosrl/iara](https://github.com/paulosrl/iara)
 **Status:** 100% Estável | 0 Avisos de Build | UI Premium Consolidada
 
 Este é o ponto de restauração definitivo após a modernização completa do projeto IARA.

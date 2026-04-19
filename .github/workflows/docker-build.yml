@@ -1,0 +1,25 @@
+name: 🧜‍♀️ IARA Docker CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: 🐳 Build Docker Image
+      run: |
+        docker build . --file Dockerfile --tag iara-app:latest
+        
+    - name: ✅ Verify Health
+      run: |
+        docker run -d --name iara-test iama-app:latest
+        sleep 5
+        docker ps | grep iara-test
+        docker stop iara-test

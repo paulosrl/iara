@@ -387,4 +387,4 @@ if st.session_state.full_text and uploaded_file:
             st.error(f"Erro no Chat: {e}")
 
 st.divider()
-st.caption("🧜‍♀️ IARA | Inteligência Analítica com GPU Local")
+st.caption("🧜‍♀️ IARA v2.2 PRO | Inteligência Analítica | 2026")

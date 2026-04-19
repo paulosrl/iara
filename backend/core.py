@@ -79,11 +79,15 @@ def process_single_page(page_num, page_obj, file_bytes):
 def extract_text_from_pdf(file_bytes):
     """Coordena a extração de texto de PDFs usando processamento paralelo para OCR."""
     pdf_reader = PyPDF2.PdfReader(io.BytesIO(file_bytes))
-    num_pages = len(pdf_reader.pages)
+    # Extrair objetos de página sequencialmente — PyPDF2 não é thread-safe
+    pages = list(pdf_reader.pages)
+    num_pages = len(pages)
     pages_results = []
-    
-    with ThreadPoolExecutor(max_workers=4) as executor:
-        futures = [executor.submit(process_single_page, i, pdf_reader.pages[i], file_bytes) for i in range(num_pages)]
+
+    # Limitar workers: máx 4 para PDFs pequenos, 2 para PDFs grandes (controle de memória)
+    workers = min(4, num_pages) if num_pages <= 20 else 2
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        futures = [executor.submit(process_single_page, i, pages[i], file_bytes) for i in range(num_pages)]
         for future in futures:
             pages_results.append(future.result())
     

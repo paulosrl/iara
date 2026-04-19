@@ -19,7 +19,7 @@ jobs:
         
     - name: ✅ Verify Health
       run: |
-        docker run -d --name iara-test iama-app:latest
+        docker run -d --name iara-test iara-app:latest
         sleep 5
         docker ps | grep iara-test
         docker stop iara-test

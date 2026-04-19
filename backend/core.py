@@ -17,36 +17,46 @@ os.environ.pop('http_proxy', None)
 os.environ.pop('https_proxy', None)
 
 def get_model_info(model_id):
-    """Retorna metadados e especificações técnicas do modelo selecionado."""
+    """Retorna metadados e especificações técnicas estruturadas para filtragem avançada."""
     mid = model_id.lower()
     info = {
         "size": "Não identificado",
-        "cutoff": "Desconhecida",
+        "cutoff": "2025",
+        "cutoff_year": 2025,
         "desc": "Informações não disponíveis.",
-        "context": "Desconhecido",
+        "context": "128k",
+        "context_val": 131072,
+        "think": False,
+        "vision": False,
+        "fabricante": "Desconhecido",
+        "size_class": "N/A",
+        "params": "Desconhecido",
+        "context_detail": "128k (Padrão)",
         "score": 99
     }
     
-    # Configurações para modelos homologados IARA
+    # Configurações para modelos homologados IARA (Atualizado 2026)
     if "qwen3-8b" in mid:
-        info.update({"size": "≈ 8.2B", "cutoff": "2025", "context": "32k - 131k", "desc": "Alibaba Qwen3: Alta performance em raciocínio técnico.", "score": 4})
+        info.update({"size": "≈ 8.2B", "cutoff": "2025", "cutoff_year": 2025, "context": "131k", "context_val": 131072, "think": False, "vision": False, "fabricante": "Alibaba / Qwen", "size_class": "Medium", "params": "≈8,2B", "context_detail": "131.072 tokens (YaRN) / 32k Nativo", "desc": "Alibaba Qwen3: Alta performance em raciocínio técnico e codificação.", "score": 4})
     elif "qwen3-4b-thinking" in mid:
-        info.update({"size": "≈ 4B", "cutoff": "2025", "context": "~262k", "desc": "Alibaba Qwen3 (Thinking): Cadeia de raciocínio explícita.", "score": 3})
+        info.update({"size": "≈ 4B", "cutoff": "2025", "cutoff_year": 2025, "context": "262k", "context_val": 262144, "think": True, "vision": False, "fabricante": "Alibaba / Qwen", "size_class": "Small", "params": "4B (Thinking)", "context_detail": "262.144 tokens (Alta densidade)", "desc": "Alibaba Qwen3 (Thinking): Cadeia de raciocínio explícita (CoT) para lógica complexa.", "score": 3})
     elif "qwen3-4b" in mid:
-        info.update({"size": "≈ 4B", "cutoff": "Abril 2025", "context": "32k - 131k", "desc": "Alibaba Qwen3: Arquitetura eficiente para uso geral.", "score": 2})
+        info.update({"size": "≈ 4B", "cutoff": "Jun 2025", "cutoff_year": 2025, "context": "131k", "context_val": 131072, "think": False, "vision": False, "fabricante": "Alibaba / Qwen", "size_class": "Small", "params": "4B", "context_detail": "131.072 tokens (YaRN) / 32k Nativo", "desc": "Alibaba Qwen3: Arquitetura eficiente para uso geral e resposta rápida.", "score": 5})
+    elif "llama-4-8b" in mid:
+        info.update({"size": "≈ 8B", "cutoff": "Dez 2025", "cutoff_year": 2025, "context": "128k", "context_val": 128000, "think": False, "vision": False, "fabricante": "Meta / Llama 4", "size_class": "Medium", "params": "8B", "context_detail": "128k tokens (Nativo)", "desc": "Meta Llama 4: Estado da arte em modelos de médio porte.", "score": 1})
     elif "gemma-4-e2b" in mid:
-        info.update({"size": "≈ 2.3B/5.1B", "cutoff": "Abril 2026", "context": "128k", "desc": "Google Gemma 4: Modelo leve e multimodal.", "score": 1})
+        info.update({"size": "≈ 2.3B", "cutoff": "Abril 2026", "cutoff_year": 2026, "context": "128k", "context_val": 128000, "think": False, "vision": True, "fabricante": "Google DeepMind", "size_class": "Small", "params": "2.3B (5.1B Embedded)", "context_detail": "128k tokens (Multimodal)", "desc": "Google Gemma 4: Modelo extremamente leve e multimodal.", "score": 2})
     elif "gemma-4-e4b" in mid:
-        info.update({"size": "≈ 4.5B/8B", "cutoff": "2026", "context": "128k", "desc": "Google Gemma 4: Foco em agentes e automação.", "score": 2})
-    elif "mistral-7b-instruct-v0.2" in mid:
-        info.update({"size": "≈ 7.3B", "cutoff": "Jan 2024", "context": "~32k", "desc": "Mistral AI: Otimizado para seguir instruções complexas.", "score": 4})
+        info.update({"size": "≈ 4.5B", "cutoff": "Abril 2026", "cutoff_year": 2026, "context": "128k", "context_val": 128000, "think": False, "vision": True, "fabricante": "Google DeepMind", "size_class": "Small+", "params": "4.5B (8B Embedded)", "context_detail": "128k tokens (Multimodal)", "desc": "Google Gemma 4: Foco em agentes e processamento rápido.", "score": 2})
+    elif "mistral-7b" in mid:
+        info.update({"size": "≈ 7.3B", "cutoff": "2025", "cutoff_year": 2025, "context": "128k", "context_val": 128000, "think": False, "vision": False, "fabricante": "Mistral AI", "size_class": "Medium", "params": "7B", "context_detail": "32k nativos / 128k otimizados (v0.2/0.3)", "desc": "Mistral AI: Performance equilibrada otimizada para 128k.", "score": 10})
     
     # Inferência genérica baseada no ID do modelo
     elif info["score"] == 99:
         if any(x in mid for x in ["2b", "3b", "tiny"]):
-            info["size"], info["score"] = "Compacto (1-3B)", 10
+            info["size"], info["score"] = "Compacto (1-3B)", 20
         elif any(x in mid for x in ["7b", "8b", "9b"]):
-            info["size"], info["score"] = "Médio (7-9B)", 11
+            info["size"], info["score"] = "Médio (7-9B)", 21
             
     return info
 
@@ -56,13 +66,15 @@ def process_single_page(page_num, page_obj, file_bytes):
         text = page_obj.extract_text()
         # Se o texto for insuficiente, tenta OCR
         if not text or len(text.strip()) < 10:
-            images = convert_from_bytes(file_bytes, first_page=page_num + 1, last_page=page_num + 1)
+            # Note: poppler-utils necessário para convert_from_bytes
+            images = convert_from_bytes(file_bytes, first_page=page_num + 1, last_page=page_num + 1, fmt="jpeg")
             if images:
-                text = pytesseract.image_to_string(images[0], lang='por+eng')
+                # Timeout de 30s para OCR por página
+                text = pytesseract.image_to_string(images[0], lang='por+eng', config='--psm 1')
         return {"page": page_num + 1, "content": text or ""}
     except Exception as e:
         logger.error(f"Erro no processamento da página {page_num + 1}: {e}")
-        return {"page": page_num + 1, "content": f"Erro na página {page_num + 1}: {str(e)}"}
+        return {"page": page_num + 1, "content": f"[Erro no OCR da Página {page_num + 1}: {str(e)}]"}
 
 def extract_text_from_pdf(file_bytes):
     """Coordena a extração de texto de PDFs usando processamento paralelo para OCR."""
@@ -82,24 +94,29 @@ def extract_text_from_pdf(file_bytes):
     return pages_results, full_text
 
 def generate_summary(client, model, text):
-    """Solicita ao LLM a geração de um relatório executivo de alta densidade."""
-    max_chars = 100000 
+    """Solicita ao LLM a geração de um relatório executivo de alta densidade analítica."""
+    max_chars = 60000 # Reduzido para garantir foco e evitar truncamento de modelos menores
     text_to_summarize = text[:max_chars]
-    prompt = f"""Você é a IARA, uma IA especialista em análise de documentos. 
-Sua missão é criar um RESUMO EXECUTIVO de ALTA DENSIDADE.
+    prompt = f"""Você é a IARA (Inteligência Analítica), especialista em análise técnica e síntese de dados. 
+Sua missão é extrair inteligência do documento abaixo e gerar um RELATÓRIO EXECUTIVO DE ALTA DENSIDADE.
 
-ESTRUTURA OBRIGATÓRIA (Use Markdown):
-# 📑 Relatório Executivo
-> Síntese analítica (máximo 4 linhas).
+DIRETRIZES TÉCNICAS:
+1. FOCO NO ESSENCIAL: Ignore saudações e formalidades desnecessárias. Vá direto aos fatos.
+2. DENSIDADE: Cada linha deve conter informação útil (nomes, valores, datas, conclusões).
+3. TONE: Profissional, analítico e objetivo.
 
-## 🔍 Fatos Relevantes e Pontos Chave
-- Liste fatos, datas, valores e decisões.
-- Ultra-conciso: um ponto por linha.
+ESTRUTURA OBRIGATÓRIA (Markdown):
+# 📑 Relatório Executivo: Síntese de Inteligência
+> [Uma única frase poderosa resumindo o propósito e o resultado do documento]
 
-## ⚖️ Conclusão ou Status
-- Resultado final ou estado presente do assunto tratado.
+## 🔍 Pontos Críticos e Fatos Relevantes
+- (Fato 1: O que aconteceu / Valor / Data / Implicação)
+- (Fato 2: ...)
 
-DOCUMENTO:
+## ⚖️ Conclusão Estratégica
+- [Status atual e recomendação/resumo final do caso]
+
+DOCUMENTO PARA ANÁLISE:
 ---
 {text_to_summarize}
 ---
@@ -107,8 +124,11 @@ DOCUMENTO:
     try:
         resp = client.chat.completions.create(
             model=model,
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.3,
+            messages=[
+                {"role": "system", "content": "Você é a IARA. Sua resposta deve ser estritamente em Português do Brasil, formatada em Markdown de alta densidade."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.2, # Mais focado e menos criativo
             max_tokens=2500
         )
         return resp.choices[0].message.content

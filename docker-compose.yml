@@ -14,7 +14,9 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
+    networks:
+      - streamlit-network
 
 networks:
-  default:
-    name: streamlit-network
+  streamlit-network:
+    driver: bridge

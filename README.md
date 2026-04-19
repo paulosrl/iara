@@ -1,47 +1,51 @@
-# 🧜‍♀️ IARA - Inteligência Artificial Regional de Análise
+# 🧜‍♀️ IARA - Inteligência Artificial Regional de Análise (v2.2)
 
-**IARA** é um assistente conversacional local e gerador de relatórios técnicos, otimizado para o processamento de grandes volumes de documentos (PDF/TXT) via modelos de linguagem executados localmente no LM Studio.
+**IARA** é um assistente conversacional local e gerador de relatórios técnicos de alto impacto, otimizado para o processamento de grandes volumes de dados via modelos de linguagem executados no LM Studio.
 
 ## 🚀 Funcionalidades Principais
 
-- **Análise Contextual de Documentos**: Suporte a PDFs (com OCR automático) e arquivos de texto de até 200MB.
-- **Relatórios Executivos**: Geração automática de sínteses técnicas de alta densidade em formato Markdown.
-- **Descoberta Inteligente de Servidor**: Localização automática de instâncias do LM Studio na rede local ou em containers Docker.
-- **Segurança e Estabilidade**: Sistema de logs detalhado e travas de segurança para evitar crashes em caso de desconexão.
-- **Alta Janela de Contexto**: Otimizado para modelos Qwen3, Gemma 4 e Mistral com processamento de até 80k caracteres de contexto.
+- **Análise Contextual de Documentos**: Suporte robusto a PDFs (com OCR Tesseract) e TXT de até 200MB.
+- **Maritime PRO UI (UX-Optimized)**: Interface moderna com suporte a temas dinâmicos (**Deep Sea** e **Coastal Blue**) e alinhamento ergonômico à esquerda.
+- **Relatórios Corporativos**: Geração de sínteses executivas de alta densidade em Markdown.
+- **Descoberta Paralela**: Localização instantânea de servidores LM Studio na rede local ou Docker.
+- **Janelas Expandidas**: Otimizado para modelos de nova geração (Qwen3/Gemma 4) com suporte a até 262k tokens de contexto.
 
-## 🧠 Modelos Homologados
+## 🧠 Modelos Homologados (v2.2)
 
-| Modelo | Especialidade | Contexto | Origem |
-| :--- | :--- | :--- | :--- |
-| **Qwen3-8B** | Raciocínio Geral / Código | 131k | Alibaba |
-| **Qwen3-4B-Thinking** | Lógica Complexa (Chain-of-Thought) | 262k | Alibaba |
-| **Gemma-4-E2B** | Multimodal / Leve | 128k | Google |
-| **Mistral-7B** | Seguimento de Instruções | 32k | Mistral |
+| Modelo                      | Fabricante      | Classe  | Parâmetros (Efetivos) | Máx. Janela de Contexto   | Corte (Data) |
+| --------------------------- | --------------- | ------- | --------------------- | ------------------------- | ------------ |
+| qwen/qwen3-4b-thinking      | Alibaba / Qwen  | Small   | 4B (Thinking/CoT)     | 262.144 (Alta Densidade)  | Junho/2025   |
+| qwen/qwen3-8b               | Alibaba / Qwen  | Medium  | ≈ 8.2B                | 131.072 (YaRN)            | Maio/2025    |
+| qwen/qwen3-4b               | Alibaba / Qwen  | Small   | 4B                    | 131.072 (YaRN)            | Junho/2025   |
+| google/gemma-4-e4b          | Google DeepMind | Small+  | 4.5B (≈8B Embedded)   | 128.000 (Multimodal)      | Abril/2026   |
+| google/gemma-4-e2b          | Google DeepMind | Small   | 2.3B (≈5.1B Embedded) | 128.000 (Multimodal)      | Abril/2026   |
+| meta/llama-4-8b             | Meta / Llama 4  | Medium  | 8B                    | 128.000 (Nativo)          | Dezembro/2025|
+| mistral-7b-instruct-v0.3    | Mistral AI      | Medium  | 7.3B                  | 128.000 (Otimizado)       | Jan/2025     |
+
+## 🎨 Interface e Acessibilidade
+
+A IARA v2.1 introduz o sistema **Maritime PRO**, permitindo alternar entre:
+- **Deep Sea (Dark)**: Fundo azul profundo (`#0B1117`) para redução de fadiga ocular em ambientes escuros.
+- **Coastal Blue (Light)**: Fundo azul-gelo de alto contraste com texto Marinho Meia-Noite para máxima legibilidade diurna.
 
 ## 🛠️ Instalação e Uso
 
-### Pré-requisitos
-- Python 3.10+
-- LM Studio ativo com o Server Local em execução.
-- Tesseract OCR (para leitura de imagens).
+A IARA é distribuída via **Docker** para garantir que todas as dependências de OCR e processamento de PDFs funcionem perfeitamente.
 
-### Execução via Script (Recomendado)
-Para rodar ou reiniciar o ambiente Docker completo:
+### 🐳 Guia de Containers (Passo a Passo)
+Para um roteiro detalhado de configuração e rede, consulte nosso:
+👉 **[Guia de Containers (DOCKER_GUIDE.md)](DOCKER_GUIDE.md)**
+
+### Inicialização Rápida (Recomendado)
+Certifique-se de que o Docker esteja rodando e execute:
 ```bash
 bash restart.sh
 ```
 
-### Execução Manual (Local)
-1. Instalar dependências: `pip install -r requirements.txt`
-2. Rodar interface: `streamlit run frontend/iara.py`
-
-## 📁 Estrutura do Projeto
-
-- `frontend/`: Interface de usuário em Streamlit.
-- `backend/`: Lógica de processamento de documentos e integração com APIs.
-- `logger_config.py`: Gestão centralizada de logs e diagnósticos.
-- `app_errors.log`: Registro de eventos e erros em tempo real (gerado automaticamente).
+### Execução Manual (Desenvolvimento)
+1. Instale dependências: `pip install -r requirements.txt`
+2. Configure o Tesseract OCR no seu SO.
+3. Execute: `streamlit run frontend/iara.py`
 
 ---
-*IARA - Transformando dados brutos em conhecimento estratégico local.*
+*IARA - Transformando dados em conhecimento estratégico local.*

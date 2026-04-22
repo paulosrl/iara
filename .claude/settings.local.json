@@ -13,7 +13,9 @@
       "Read(///wsl.localhost/Ubuntu-24.04/tmp/**)",
       "Bash(cp -r /tmp/ecc/agents ~/.claude/)",
       "Bash(cp -r /tmp/ecc/skills ~/.claude/)",
-      "Bash(cp -r /tmp/ecc/commands ~/.claude/)"
+      "Bash(cp -r /tmp/ecc/commands ~/.claude/)",
+      "Bash(rm \"//wsl.localhost/Ubuntu-24.04/home/pl/projetos/iara/ref/conectaLLM.py\" \"//wsl.localhost/Ubuntu-24.04/home/pl/projetos/iara/ref/app_streamlit.py\")",
+      "Bash(mv \"//wsl.localhost/Ubuntu-24.04/home/pl/projetos/iara/ref/conexao.py\" \"//wsl.localhost/Ubuntu-24.04/home/pl/projetos/iara/backend/conexao.py\")"
     ]
   }
 }

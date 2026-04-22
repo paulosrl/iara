@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**IARA** (Inteligência Analítica) is a local conversational assistant and technical report generator built with Streamlit + FastAPI-style Python backend. It connects to **LM Studio** (local LLM runtime) for inference — it uses the OpenAI SDK but points to a local endpoint, not the OpenAI API.
+**IARA** (Inteligência Analítica) is a local conversational assistant and PDF report generator built with Streamlit. It connects to **LM Studio** (local LLM runtime) or **Azure OpenAI** for inference, using the OpenAI SDK pointed at the appropriate endpoint.
 
 ## Running the Application
 
@@ -24,61 +24,97 @@ streamlit run frontend/iara.py
 ## Verification
 
 ```bash
-docker ps                                              # Container status
-curl http://localhost:8501                             # App health
-docker exec -it streamlit-llm-chat tesseract --version # OCR check
-docker compose logs -f                                 # Live logs
+docker ps                                               # Container status
+curl http://localhost:8501/_stcore/health               # App health (real healthcheck)
+docker exec -it streamlit-llm-chat tesseract --version  # OCR check
+docker compose logs -f                                  # Live logs
 ```
 
 ## Architecture
 
 ```
-frontend/iara.py   ← Streamlit UI, session state, theming, chat loop
-backend/core.py    ← PDF/OCR extraction, LLM calls, model metadata DB
-logger_config.py   ← Centralized RotatingFileHandler (5MB, 3 backups)
+frontend/iara.py       ← Streamlit UI, session state, theming, chat loop
+backend/core.py        ← PDF/OCR extraction, LLM calls, model metadata, context limits
+backend/providers.py   ← LM Studio discovery + Azure OpenAI client (all connection logic)
+logger_config.py       ← Centralized RotatingFileHandler (5MB, 3 backups, configurable via LOG_FILE env)
 ```
 
-### Key Backend Functions (`backend/core.py`)
+### backend/core.py — Processamento
 
-- `get_model_info(model_id)` — Returns metadata (context window, cutoff date, features) for homologated models
-- `extract_text_from_pdf(file_bytes)` — Parallel page extraction via `ThreadPoolExecutor(4)`; falls back to Tesseract OCR if PyPDF2 yields < 10 chars
-- `generate_summary(client, model, text)` — Generates an executive Markdown report
-- `chat_response(client, model, messages)` — Streams LLM response, logs timing metrics
+Constants:
+- `CHAT_MAX_CHARS = 20_000` — Max characters sent as document context per chat message
+- `SUMMARY_MAX_CHARS = 20_000` — Max characters sent for report generation
+- `CHAT_HISTORY_TURNS = 6` — Number of past messages included per request
 
-### Key Frontend Patterns (`frontend/iara.py`)
+Key functions:
+- `get_model_info(model_id, provider)` — Returns metadata (score, context window, features) for homologated models. Score defines UI ordering (lower = higher priority).
+- `extract_text_from_pdf(file_bytes)` — Sequential PyPDF2 extraction + parallel Tesseract OCR fallback for pages with < 10 chars
+- `generate_summary(client, model, text)` — Returns a streaming response for real-time Markdown report display
+- `chat_response(client, model, messages)` — Returns `(stream, start_time)` tuple
 
-- All UI state lives in `st.session_state` (theme, messages, extracted text, selected model)
-- Theming is done via CSS injection: "Deep Sea PRO" (dark) / "Coastal Blue PRO" (light)
-- Model discovery calls multiple fallback URLs to handle Docker, WSL, and bare-metal setups
+### backend/providers.py — Conexão
+
+- `discover_local_models()` — Tests all LM Studio URLs in parallel, returns first responding `(url, models_list)`
+- `get_local_client(url)` — Creates an OpenAI client pointed at LM Studio
+- `get_azure_client()` — Thread-safe singleton Azure OpenAI client (double-checked locking)
+- `list_azure_deployments()` — Returns deployments from `.env` vars
+
+### frontend/iara.py — UI
+
+- All state in `st.session_state`: `theme_mode`, `messages`, `full_text`, `document_summary`, `last_file`, `proc_time`, `active_url`, `provider`
+- `_get_local_models_cached()` — `@st.cache_resource` wrapper over `discover_local_models()`
+- "Limpar Chat" clears all session keys: messages, full_text, document_summary, last_file, proc_time
+- Theming via CSS injection: "Deep Sea PRO" (dark) / "Coastal Blue PRO" (light)
 
 ### LM Studio Connection
 
-The app tries these URLs in order until one responds:
+`providers.py` tests these URLs in parallel (timeout 0.8s each), returns first to respond:
 
 ```python
 [
     os.getenv("LM_STUDIO_URL", "http://host.docker.internal:1234/v1"),
     "http://localhost:1234/v1",
     "http://127.0.0.1:1234/v1",
-    "http://172.17.0.1:1234/v1",  # ... Docker bridge variants
-    "http://172.26.240.1:1234/v1", # WSL-specific
+    "http://172.17.0.1:1234/v1",
+    "http://172.18.0.1:1234/v1",
+    "http://172.20.0.1:1234/v1",
+    "http://172.26.240.1:1234/v1",  # WSL-specific gateway
+    "http://192.168.1.1:1234/v1",
 ]
 ```
 
-LM Studio must be running on the host with a model loaded before starting the app.
+LM Studio must be running on the host with at least one model loaded.
 
 ## Environment
 
-- `.env` — Only variable needed: `LM_STUDIO_URL=http://host.docker.internal:1234/v1`
+- `.env` — See `.env.example` for all variables (LM Studio + Azure OpenAI + logging)
 - Docker container name: `streamlit-llm-chat`
 - Exposed port: `8501`
 
-## Homologated Models
+## Homologated Models (GPU 8GB)
 
-Seven models are formally supported with hardcoded metadata in `backend/core.py:get_model_info()`:
-`qwen3-8b`, `qwen3-4b-thinking`, `qwen3-4b`, `llama-4-8b`, `gemma-4-e4b`, `gemma-4-e2b`, `mistral-7b`.
-Adding a new model requires updating that function's lookup dict.
+Defined in `backend/core.py:get_model_info()`. Score determines UI display order (lower = first):
+
+| Score | Model ID pattern | Params | Notes |
+|-------|-----------------|--------|-------|
+| 0 | Azure GPT family | Cloud | Azure provider, always top |
+| 1 | `qwen2.5-7b` | 7B | Best overall for 8GB GPU |
+| 2 | `qwen2.5-coder-3b` | 3B | Fast, structured analysis |
+| 3 | `qwen2.5-3b` | 3B | Ultra-fast chat |
+| 4 | `phi-4-mini` / `phi-4-mini-reasoning` | 3.8B | Reasoning flag auto-detected |
+| 5 | `mistral-7b` | 7B | Stable, good inference speed |
+| 6 | `gemma-3n` | 4B | Efficient new architecture |
+| 7 | `gemma-3-4b` | 4B | Gemma 3 standard |
+| 8 | `gemma-4-e4b` | 4.5B | Use for vision/multimodal |
+| 9 | `gemma-4-e2b` | 2B | Fastest, when speed is critical |
+
+Models with score > 10 are filtered out of the UI. Non-homologated models get score 20–21 (generic inference by size substring).
+
+**LM Studio tip:** Set Context Length to 8192 for the `qwen2.5-7b-instruct-1m` model — the 1M context window allocates VRAM proportionally, leaving little room for fast inference.
 
 ## CI/CD
 
-GitHub Actions (`.github/workflows/docker-build.yml`) triggers on push/PR to `main`: builds the Docker image and verifies the container starts successfully.
+GitHub Actions (`.github/workflows/docker-build.yml`) triggers on push/PR to `main`:
+1. Builds Docker image
+2. Starts container and polls `/_stcore/health` up to 15 times (2s interval)
+3. Prints container logs on failure

@@ -12,14 +12,21 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: 🐳 Build Docker Image
+      run: docker build . --file Dockerfile --tag iara-app:latest
+
+    - name: ✅ Health Check
       run: |
-        docker build . --file Dockerfile --tag iara-app:latest
-        
-    - name: ✅ Verify Health
-      run: |
-        docker run -d --name iara-test iara-app:latest
-        sleep 5
-        docker ps | grep iara-test
+        docker run -d --name iara-test -p 8501:8501 iara-app:latest
+        echo "Aguardando Streamlit iniciar..."
+        for i in $(seq 1 15); do
+          if curl -sf http://localhost:8501/_stcore/health > /dev/null 2>&1; then
+            echo "✅ App respondendo na tentativa $i"
+            break
+          fi
+          echo "Tentativa $i/15..."
+          sleep 2
+        done
+        curl -sf http://localhost:8501/_stcore/health || (docker logs iara-test && exit 1)
         docker stop iara-test

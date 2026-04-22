@@ -9,6 +9,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 # Configuração de caminhos para módulos locais
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from backend.core import get_model_info, extract_text_from_pdf, generate_summary, chat_response
+from ref.conexao import listar_deployments, _cliente as get_azure_client
 from logger_config import get_logger
 
 logger = get_logger("frontend-iara")
@@ -242,14 +243,28 @@ with st.sidebar:
     uploaded_file = st.file_uploader("Arraste um PDF ou TXT", type=["txt", "pdf"], label_visibility="collapsed")
     
     st.subheader("🤖 Modelo")
-    active_url, raw_models = get_models_cached()
     
+    # Seleção de Provedor
+    provider = st.radio("Provedor:", ["Local (LM Studio)", "Nuvem (Azure OpenAI)"], horizontal=True, label_visibility="collapsed")
+    st.session_state.provider = "azure" if "Azure" in provider else "local"
+
+    if st.session_state.provider == "local":
+        active_url, raw_models = get_models_cached()
+    else:
+        try:
+            raw_models = listar_deployments()
+            active_url = "azure_api"
+        except Exception as e:
+            st.error(f"Erro no Azure: {e}")
+            raw_models = []
+            active_url = None
+
     if active_url:
         st.session_state.active_url = active_url
         
         # Extração de limites dinâmicos para os filtros
-        available_contexts = sorted(list(set(get_model_info(m)["context_val"] // 1024 for m in raw_models)))
-        available_years = sorted(list(set(get_model_info(m)["cutoff_year"] for m in raw_models)))
+        available_contexts = sorted(list(set(get_model_info(m, provider=st.session_state.provider)["context_val"] // 1024 for m in raw_models)))
+        available_years = sorted(list(set(get_model_info(m, provider=st.session_state.provider)["cutoff_year"] for m in raw_models)))
         
         # Filtros Dinâmicos
         with st.expander("⚙️ Filtros Avançados"):
@@ -272,10 +287,14 @@ with st.sidebar:
                 f_year = available_years[0] if available_years else 2025
                 st.caption(f"Ano único: {f_year}")
 
-        # Lógica de Filtragem (Defensiva)
+        # Lógica de Filtragem (Defensiva e Homologada)
         filtered_models = []
         for m_id in raw_models:
-            info = get_model_info(m_id)
+            info = get_model_info(m_id, provider=st.session_state.provider)
+            
+            # Filtro de Homologação (Apenas Top 2: Elite 8GB)
+            if info.get("score", 99) > 2: continue
+            
             if f_think and not info.get("think", False): continue
             if f_vision and not info.get("vision", False): continue
             
@@ -292,7 +311,7 @@ with st.sidebar:
             selected_model = None
         else:
             selected_model = st.selectbox("IA para análise:", filtered_models, label_visibility="collapsed")
-            m_info = get_model_info(selected_model)
+            m_info = get_model_info(selected_model, provider=st.session_state.provider)
             
             st.markdown(f"""
                 <div class="model-details">
@@ -306,8 +325,12 @@ with st.sidebar:
                 </div>
             """, unsafe_allow_html=True)
     else:
-        st.error("❌ LM Studio não detectado.")
-        st.info("Inicie o servidor local no LM Studio para prosseguir.")
+        if st.session_state.provider == "local":
+            st.error("❌ LM Studio não detectado.")
+            st.info("Inicie o servidor local no LM Studio para prosseguir.")
+        else:
+            st.error("❌ Falha na conexão com Azure.")
+            st.info("Verifique as variáveis de ambiente no arquivo .env.")
         selected_model = None
 
     st.markdown("<div style='margin-top: 25px;'></div>", unsafe_allow_html=True)
@@ -328,7 +351,14 @@ if selected_model:
     st.markdown(f"🤖 **Modelo Ativo:** `{selected_model}`")
 
 # Processamento do Documento
-if uploaded_file and not st.session_state.full_text:
+if uploaded_file:
+    if st.session_state.get("last_file") != uploaded_file.name:
+        st.session_state.full_text = None
+        st.session_state.document_summary = None
+        st.session_state.messages = []
+        st.session_state.last_file = uploaded_file.name
+
+if uploaded_file and not st.session_state.get("full_text"):
     st.info("📖 **Lendo documento...**")
     with st.status("🔍 Extraindo conteúdo...", expanded=True) as status:
         try:
@@ -342,54 +372,69 @@ if uploaded_file and not st.session_state.full_text:
         except Exception as e:
             st.error(f"Erro: {e}")
 
-if st.session_state.full_text and uploaded_file:
+if st.session_state.get("full_text"):
     # Trava de Segurança
     if not st.session_state.active_url:
-        st.warning("⚠️ Conecte ao LM Studio para habilitar a análise.")
+        st.warning("⚠️ Conecte ao provedor para habilitar a análise.")
     else:
-        if "document_summary" not in st.session_state or st.session_state.get("last_file") != uploaded_file.name:
-            try:
-                client = OpenAI(base_url=st.session_state.active_url, api_key="not-needed")
-                with st.spinner("🧜‍♀️ Processando o arquivo..."):
-                    st.session_state.document_summary = generate_summary(client, selected_model, st.session_state.full_text)
-                    st.session_state.last_file = uploaded_file.name
-            except Exception as e:
-                st.error(f"Erro na análise: {e}")
+        if not st.session_state.get("document_summary"):
+            st.info("📄 Documento carregado em memória. Selecione o provedor e modelo desejados na barra lateral.")
+            if st.button(f"🚀 Gerar Relatório Executivo com {selected_model}", use_container_width=True, type="primary"):
+                try:
+                    if st.session_state.provider == "azure":
+                        client = get_azure_client()
+                    else:
+                        client = OpenAI(base_url=st.session_state.active_url, api_key="not-needed")
+                    with st.spinner("🧜‍♀️ Gerando relatório de alta densidade..."):
+                        start_proc = time.time()
+                        st.session_state.document_summary = generate_summary(client, selected_model, st.session_state.full_text)
+                        st.session_state.proc_time = time.time() - start_proc
+                        st.rerun()
+                except Exception as e:
+                    st.error(f"Erro na análise: {e}")
 
-    if "document_summary" in st.session_state:
+    if st.session_state.get("document_summary"):
         with st.expander("📑 Relatório Executivo", expanded=True):
             st.markdown(st.session_state.document_summary)
+            if "proc_time" in st.session_state:
+                st.caption(f"⏱️ Tempo de processamento: {st.session_state.proc_time:.2f}s")
             # Exportação
-            full_md = f"# Relatório IARA: {uploaded_file.name}\n\n{st.session_state.document_summary}\n\n---\n\n{st.session_state.full_text}"
+            file_name_export = st.session_state.get("last_file", "documento")
+            full_md = f"# Relatório IARA: {file_name_export}\n\n{st.session_state.document_summary}\n\n---\n\n{st.session_state.full_text}"
             st.download_button("📥 Exportar Relatório (.md)", data=full_md, file_name=f"IARA_Relatorio.md", mime="text/markdown", use_container_width=True)
 
-    st.divider()
-    
-    # Chat Interativo
-    for msg in st.session_state.messages:
-        with st.chat_message(msg["role"], avatar="🧜‍♀️" if msg["role"] == "assistant" else "🏊"):
-            st.markdown(msg["content"])
-
-    user_input = st.chat_input("Faça perguntas sobre o documento...")
-    if user_input and st.session_state.active_url:
-        st.session_state.messages.append({"role": "user", "content": user_input})
-        with st.chat_message("user", avatar="🏊"): st.markdown(user_input)
+        st.divider()
+        st.markdown(f"<h3 style='color: {c_accent};'>💬 Pesquisa e Chat com o Documento</h3>", unsafe_allow_html=True)
+        st.markdown("<p style='color: #8B949E; margin-bottom: 20px;'>O relatório acima é o resumo padrão. Use a caixa de texto na parte inferior da tela para <b>fazer perguntas específicas</b>, pesquisar valores ocultos ou pedir novas análises.</p>", unsafe_allow_html=True)
         
-        try:
-            client = OpenAI(base_url=st.session_state.active_url, api_key="not-needed")
-            sys_prompt = f"Você é a IARA. Responda baseado no DOCUMENTO:\n{st.session_state.full_text[:60000]}"
-            msgs = [{"role": "system", "content": sys_prompt}] + st.session_state.messages[-10:]
+        # Chat Interativo
+        for msg in st.session_state.messages:
+            with st.chat_message(msg["role"], avatar="🧜‍♀️" if msg["role"] == "assistant" else "🏊"):
+                st.markdown(msg["content"])
 
-            with st.chat_message("assistant", avatar="🧜‍♀️"):
-                stream, _ = chat_response(client, selected_model, msgs)
-                content = st.write_stream(
-                    chunk.choices[0].delta.content or ""
-                    for chunk in stream
-                    if chunk.choices and chunk.choices[0].delta.content
-                )
-                st.session_state.messages.append({"role": "assistant", "content": content})
-        except Exception as e:
-            st.error(f"Erro no Chat: {e}")
+        user_input = st.chat_input("Pesquise no documento (ex: Quais são os riscos apontados?)...")
+        if user_input and st.session_state.active_url:
+            st.session_state.messages.append({"role": "user", "content": user_input})
+            with st.chat_message("user", avatar="🏊"): st.markdown(user_input)
+            
+            try:
+                if st.session_state.provider == "azure":
+                    client = get_azure_client()
+                else:
+                    client = OpenAI(base_url=st.session_state.active_url, api_key="not-needed")
+                sys_prompt = f"Você é a IARA. Responda baseado no DOCUMENTO:\n{st.session_state.full_text[:60000]}"
+                msgs = [{"role": "system", "content": sys_prompt}] + st.session_state.messages[-10:]
+
+                with st.chat_message("assistant", avatar="🧜‍♀️"):
+                    stream, _ = chat_response(client, selected_model, msgs)
+                    content = st.write_stream(
+                        chunk.choices[0].delta.content or ""
+                        for chunk in stream
+                        if chunk.choices and chunk.choices[0].delta.content
+                    )
+                    st.session_state.messages.append({"role": "assistant", "content": content})
+            except Exception as e:
+                st.error(f"Erro no chat: {e}")
 
 st.divider()
-st.caption("🧜‍♀️ IARA v2.3 | Inteligência Analítica | 2026")
+st.caption("🧜‍♀️ IARA v2.4 | Inteligência Analítica | 2026")

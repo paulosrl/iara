@@ -3,7 +3,17 @@
     "allow": [
       "Bash(cd /home/pl/projetos/iara)",
       "Bash(ls -la /home/pl/projetos/)",
-      "Bash(ssh -T git@github.com)"
+      "Bash(ssh -T git@github.com)",
+      "Bash(gh repo:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Read(//c/Users/GRATITUTE-HOME/.claude/**)",
+      "Read(//c/Users/GRATITUTE-HOME/.claude/rules/**)",
+      "Bash(git clone:*)",
+      "Read(///wsl.localhost/Ubuntu-24.04/tmp/**)",
+      "Bash(cp -r /tmp/ecc/agents ~/.claude/)",
+      "Bash(cp -r /tmp/ecc/skills ~/.claude/)",
+      "Bash(cp -r /tmp/ecc/commands ~/.claude/)"
     ]
   }
 }

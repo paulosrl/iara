@@ -27,3 +27,11 @@ Este checkpoint registra as correções aplicadas após análise estática do co
 
 ---
 *Certificado por: Paulo Lima + Claude Sonnet 4.6*
+
+## 🚩 NOVO CHECKPOINT: Pré-Ajuste v2.4 (Atualizado)
+**Data:** 22 de Abril de 2026
+**Objetivo:** Preservar estado estável e testado da v2.3 antes do ajuste estrutural importante.
+- Snapshot de memória atualizado em `MEMORY_SNAPSHOT.md`.
+- Backend local (LM Studio) totalmente funcional e otimizado para GPUs de 8GB.
+- Interface Azure (`ref/app_streamlit.py`) validada e testada com sucesso.
+- Versão congelada, aguardando o ajuste crítico do usuário.

@@ -19,13 +19,8 @@
 
 | Modelo                      | Fabricante      | Classe  | Parâmetros (Efetivos) | Máx. Janela de Contexto   | Corte (Data) |
 | --------------------------- | --------------- | ------- | --------------------- | ------------------------- | ------------ |
-| qwen/qwen3-4b-thinking      | Alibaba / Qwen  | Small   | 4B (Thinking/CoT)     | 262.144 (Alta Densidade)  | Junho/2025   |
-| qwen/qwen3-8b               | Alibaba / Qwen  | Medium  | ≈ 8.2B                | 131.072 (YaRN)            | Maio/2025    |
-| qwen/qwen3-4b               | Alibaba / Qwen  | Small   | 4B                    | 131.072 (YaRN)            | Junho/2025   |
-| google/gemma-4-e4b          | Google DeepMind | Small+  | 4.5B (≈8B Embedded)   | 128.000 (Multimodal)      | Abril/2026   |
-| google/gemma-4-e2b          | Google DeepMind | Small   | 2.3B (≈5.1B Embedded) | 128.000 (Multimodal)      | Abril/2026   |
-| meta/llama-4-8b             | Meta / Llama 4  | Medium  | 8B                    | 128.000 (Nativo)          | Dezembro/2025|
-| mistral-7b-instruct-v0.3    | Mistral AI      | Medium  | 7.3B                  | 128.000 (Otimizado)       | Jan/2025     |
+| meta/llama-3.1-8b             | Meta / Llama    | Medium  | 8B                    | 128.000 (Nativo)          | 2024/2025    |
+| google/gemma-4-e4b          | Google DeepMind | Small+  | 4.5B (Multimodal)     | 128.000 (Otimizado)       | Abril/2026   |
 
 ## 🎨 Interface e Acessibilidade
 
